@@ -7,11 +7,14 @@
 #include <algorithm>
 #include <setjmp.h>
 #include <new>
+#include <getopt.h>
+#include "code_utils.hpp"
+#include "application.hpp"
 
 static constexpr char kAutoAttachDisableArg[] = "--auto-attach=0";
 static char           sAutoAttachDisableArgStorage[sizeof(kAutoAttachDisableArg)];
 static jmp_buf sResetJump;
-
+static const char* kDefaultInterfaceName = "wpan0";
 enum
 {
     OTBR_OPT_BACKBONE_INTERFACE_NAME = 'B',
@@ -28,7 +31,7 @@ enum
     OTBR_OPT_REST_LISTEN_PORT,
 };
 
-static const struct option kOption[] = {
+static const struct option kOptions[] = {
     {"backbone-ifname", required_argument, nullptr, OTBR_OPT_BACKBONE_INTERFACE_NAME},
     {"debug-level", required_argument, nullptr, OTBR_OPT_DEBUG_LEVEL},
     {"help", no_argument, nullptr, OTBR_OPT_HELP},
@@ -76,7 +79,8 @@ static int realmain(int argc, char *argv[])
 {
 	int opt;
 	int ret = EXIT_SUCCESS;
-
+	const char *interfaceName = kDefaultInterfaceName;
+	std::vector<const char *> radioUrls;
 	// std::new_handler ser_new_handler(std::new_handler new_p)
 	// Create a new handler and returns the previously installed handler
 	// This new_p function is called by allocation functions whenever a memory allocation attemp fails
@@ -100,6 +104,7 @@ static int realmain(int argc, char *argv[])
 				break;
 
 			case OTBR_OPT_INTERFACE_NAME:
+				interfaceName = optarg;
 				break;
 
 			case OTBR_OPT_VERBOSE:
@@ -128,6 +133,17 @@ static int realmain(int argc, char *argv[])
 				ExitNow(EXIT_FAILURE);
 				break;
 		}
+	}
+
+	for (int i = optind; i < argc; i++)
+	{
+		printf("Radio URL: %s\n", argv[i]);
+		radioUrls.push_back(argv[i]);
+	}
+
+	{
+		Application app;
+		Application app2 = app;
 	}
 
 	exit:
